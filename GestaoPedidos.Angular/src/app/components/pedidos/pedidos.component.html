@@ -1,0 +1,181 @@
+<div class="pedidos-container">
+  <h2>Meus Pedidos</h2>
+
+  <div *ngIf="carregando" class="loading">
+    Carregando pedidos...
+  </div>
+
+  <div *ngIf="erro" class="error">
+    {{ erro }}
+    <button (click)="carregarPedidos()">Tentar Novamente</button>
+  </div>
+
+  <div class="pedidos-lista" *ngIf="!carregando && !erro">
+    <div class="pedido-card" *ngFor="let pedido of pedidos">
+      <div class="pedido-header">
+        <div class="pedido-numero">
+          <h3>Pedido {{ pedido.numero }}</h3>
+          <span class="status" [ngClass]="obterClasseStatus(pedido.status)">
+            {{ obterStatusTexto(pedido.status) }}
+          </span>
+        </div>
+        <div class="pedido-data">
+          {{ formatarData(pedido.criadoEm) }}
+        </div>
+      </div>
+
+      <div class="pedido-itens">
+        <h4>Itens do Pedido:</h4>
+        <div class="item" *ngFor="let item of pedido.itens">
+          <div class="item-info">
+            <span class="item-nome">{{ item.produtoNome }}</span>
+            <span class="item-sku">SKU: {{ item.produtoSku }}</span>
+          </div>
+          <div class="item-quantidade">
+            Qtd: {{ item.quantidade }}
+          </div>
+          <div class="item-preco">
+            {{ formatarPreco(item.precoUnitario) }}
+          </div>
+          <div class="item-total">
+            {{ formatarPreco(item.totalItem) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="pedido-footer">
+        <div class="pedido-totais">
+          <div class="total-linha">
+            <span>Total Bruto:</span>
+            <span>{{ formatarPreco(pedido.totalBruto) }}</span>
+          </div>
+          <div class="total-linha" *ngIf="pedido.desconto > 0">
+            <span>Desconto:</span>
+            <span class="desconto">-{{ formatarPreco(pedido.desconto) }}</span>
+          </div>
+          <div class="total-linha total-final">
+            <span><strong>Total Líquido:</strong></span>
+            <span><strong>{{ formatarPreco(pedido.totalLiquido) }}</strong></span>
+          </div>
+        </div>
+
+        <div class="pedido-acoes">
+          <button
+            class="btn-confirmar"
+            *ngIf="podeConfirmar(pedido)"
+            (click)="confirmarPedido(pedido)">
+            Confirmar Pedido
+          </button>
+
+          <button
+            class="btn-cancelar"
+            *ngIf="podeCancelar(pedido)"
+            (click)="cancelarPedido(pedido)">
+            Cancelar Pedido
+          </button>
+
+          <button
+            class="btn-detalhes"
+            (click)="verDetalhes(pedido)">
+            Ver Detalhes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="pedidos.length === 0 && !carregando && !erro" class="empty">
+    Nenhum pedido encontrado.
+  </div>
+</div>
+
+<!-- Modal de Detalhes do Pedido -->
+<div class="modal-overlay" *ngIf="mostrarDetalhes && pedidoDetalhes">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Detalhes do Pedido {{ pedidoDetalhes.numero }}</h3>
+      <button class="btn-fechar" (click)="fecharDetalhes()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detalhes-grid">
+        <div class="detalhe-item">
+          <label>Status:</label>
+          <span class="status" [ngClass]="obterClasseStatus(pedidoDetalhes.status)">
+            {{ obterStatusTexto(pedidoDetalhes.status) }}
+          </span>
+        </div>
+
+        <div class="detalhe-item">
+          <label>Cliente ID:</label>
+          <span>{{ pedidoDetalhes.clienteId }}</span>
+        </div>
+
+        <div class="detalhe-item">
+          <label>Criado em:</label>
+          <span>{{ formatarData(pedidoDetalhes.criadoEm) }}</span>
+        </div>
+
+        <div class="detalhe-item" *ngIf="pedidoDetalhes.confirmadoEm">
+          <label>Confirmado em:</label>
+          <span>{{ formatarData(pedidoDetalhes.confirmadoEm) }}</span>
+        </div>
+
+        <div class="detalhe-item" *ngIf="pedidoDetalhes.canceladoEm">
+          <label>Cancelado em:</label>
+          <span>{{ formatarData(pedidoDetalhes.canceladoEm) }}</span>
+        </div>
+
+        <div class="detalhe-item" *ngIf="pedidoDetalhes.faturadoEm">
+          <label>Faturado em:</label>
+          <span>{{ formatarData(pedidoDetalhes.faturadoEm) }}</span>
+        </div>
+      </div>
+
+      <div class="itens-detalhes">
+        <h4>Itens do Pedido:</h4>
+        <table class="itens-tabela">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>SKU</th>
+              <th>Qtd</th>
+              <th>Preço Unit.</th>
+              <th>Desconto</th>
+              <th>Total Item</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of pedidoDetalhes.itens">
+              <td>{{ item.produtoNome }}</td>
+              <td>{{ item.produtoSku }}</td>
+              <td>{{ item.quantidade }}</td>
+              <td>{{ formatarPreco(item.precoUnitario) }}</td>
+              <td>{{ formatarPreco(item.descontoItem) }}</td>
+              <td>{{ formatarPreco(item.totalItem) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="totais-detalhes">
+        <div class="total-linha">
+          <span>Total Bruto:</span>
+          <span>{{ formatarPreco(pedidoDetalhes.totalBruto) }}</span>
+        </div>
+        <div class="total-linha" *ngIf="pedidoDetalhes.desconto > 0">
+          <span>Desconto Total:</span>
+          <span class="desconto">-{{ formatarPreco(pedidoDetalhes.desconto) }}</span>
+        </div>
+        <div class="total-linha total-final">
+          <span><strong>Total Líquido:</strong></span>
+          <span><strong>{{ formatarPreco(pedidoDetalhes.totalLiquido) }}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-fechar-modal" (click)="fecharDetalhes()">Fechar</button>
+    </div>
+  </div>
+</div>

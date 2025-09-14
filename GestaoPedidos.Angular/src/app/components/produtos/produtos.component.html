@@ -1,0 +1,119 @@
+<div class="produtos-container">
+  <div class="header-actions">
+    <h2>Gestão de Produtos</h2>
+    <button class="btn-novo" (click)="mostrarFormularioNovo()">
+      Novo Produto
+    </button>
+  </div>
+
+  <!-- Formulário de Produto -->
+  <div class="formulario-overlay" *ngIf="mostrarFormulario">
+    <div class="formulario-modal">
+      <h3>{{ produtoEdicao ? 'Editar Produto' : 'Novo Produto' }}</h3>
+
+      <form (ngSubmit)="salvarProduto()">
+        <div class="form-group">
+          <label>SKU:</label>
+          <input
+            type="text"
+            [(ngModel)]="formulario.sku"
+            name="sku"
+            [disabled]="produtoEdicao !== null"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label>Nome:</label>
+          <input
+            type="text"
+            [(ngModel)]="formulario.nome"
+            name="nome"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label>Preço Base:</label>
+          <input
+            type="number"
+            [(ngModel)]="formulario.precoBase"
+            name="precoBase"
+            step="0.01"
+            min="0"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label>Estoque Atual:</label>
+          <input
+            type="number"
+            [(ngModel)]="formulario.estoqueAtual"
+            name="estoqueAtual"
+            min="0"
+            required>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="formulario.ativo"
+              name="ativo">
+            Produto Ativo
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancelar" (click)="cancelarFormulario()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-salvar">
+            {{ produtoEdicao ? 'Atualizar' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div *ngIf="carregando" class="loading">
+    Carregando produtos...
+  </div>
+
+  <div *ngIf="erro" class="error">
+    {{ erro }}
+    <button (click)="carregarProdutos()">Tentar Novamente</button>
+  </div>
+
+  <!-- Lista de Produtos -->
+  <div class="produtos-lista" *ngIf="!carregando && !erro">
+    <div class="produto-item" *ngFor="let produto of produtos">
+      <div class="produto-info">
+        <h3>{{ produto.nome }}</h3>
+        <p class="sku">SKU: {{ produto.sku }}</p>
+        <p class="preco">{{ formatarPrecoFinal(produto) }}</p>
+        <p class="estoque">Estoque: {{ produto.estoqueAtual }} unidades</p>
+        <span class="status" [class.ativo]="produto.ativo" [class.inativo]="!produto.ativo">
+          {{ produto.ativo ? 'Ativo' : 'Inativo' }}
+        </span>
+      </div>
+
+      <div class="produto-actions">
+        <button
+          class="btn-carrinho"
+          (click)="adicionarAoCarrinho(produto)"
+          [disabled]="produto.estoqueAtual <= 0 || !produto.ativo">
+          Carrinho
+        </button>
+        <button class="btn-editar" (click)="editarProduto(produto)">
+          Editar
+        </button>
+        <button class="btn-excluir" (click)="excluirProduto(produto)">
+          Excluir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="produtos.length === 0 && !carregando && !erro" class="empty">
+    Nenhum produto cadastrado. Clique em "Novo Produto" para começar.
+  </div>
+</div>

@@ -1,0 +1,145 @@
+<div class="promocoes-container">
+  <div class="header-actions">
+    <h2>Gestão de Promoções</h2>
+    <button class="btn-novo" (click)="mostrarFormularioNovo()">
+      Nova Promoção
+    </button>
+  </div>
+
+  <!-- Formulário de Promoção -->
+  <div class="formulario-overlay" *ngIf="mostrarFormulario">
+    <div class="formulario-modal">
+      <h3>{{ promocaoEdicao ? 'Editar Promoção' : 'Nova Promoção' }}</h3>
+
+      <form (ngSubmit)="salvarPromocao()">
+        <div class="form-group">
+          <label>Produto: *</label>
+          <select
+            [(ngModel)]="formulario.produtoId"
+            name="produtoId"
+            required>
+            <option [value]="null">Selecione um produto</option>
+            <option *ngFor="let produto of produtos" [value]="produto.id">
+              {{ produto.nome }} ({{ produto.sku }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição:</label>
+          <textarea
+            [(ngModel)]="formulario.descricao"
+            name="descricao"
+            rows="3">
+          </textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo:</label>
+          <select
+            [(ngModel)]="formulario.tipo"
+            name="tipo"
+            (change)="onTipoChange()"
+            required>
+            <option [value]="TipoPromocao.Porcentagem">Porcentagem</option>
+            <option [value]="TipoPromocao.ValorFixo">Valor Fixo</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Valor:</label>
+          <input
+            type="number"
+            [(ngModel)]="formulario.valor"
+            name="valor"
+            step="0.01"
+            min="0"
+            required>
+          <small *ngIf="formulario.tipo === TipoPromocao.Porcentagem">% de desconto</small>
+          <small *ngIf="formulario.tipo === TipoPromocao.ValorFixo">R$ de desconto</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Início: *</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="formulario.dataInicio"
+              name="dataInicio"
+              required>
+          </div>
+          <div class="form-group">
+            <label>Data Fim: *</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="formulario.dataFim"
+              name="dataFim"
+              required>
+          </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="formulario.ativo"
+              name="ativo">
+            Promoção Ativa
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancelar" (click)="cancelarFormulario()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-salvar">
+            {{ promocaoEdicao ? 'Atualizar' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div *ngIf="carregando" class="loading">
+    Carregando promoções...
+  </div>
+
+  <div *ngIf="erro" class="error">
+    {{ erro }}
+    <button (click)="carregarPromocoes()">Tentar Novamente</button>
+  </div>
+
+  <!-- Lista de Promoções -->
+  <div class="promocoes-lista" *ngIf="!carregando && !erro">
+    <div class="promocao-item" *ngFor="let promocao of promocoes">
+      <div class="promocao-info">
+        <h3>{{ promocao.nome }}</h3>
+        <p class="descricao">{{ promocao.descricao }}</p>
+        <div class="promocao-detalhes">
+          <span class="tipo">{{ obterDescricaoTipo(promocao.tipo) }}</span>
+          <span class="valor">{{ formatarValor(promocao) }}</span>
+        </div>
+        <div class="promocao-periodo">
+          <span>De: {{ formatarData(promocao.dataInicio) }}</span>
+          <span>Até: {{ formatarData(promocao.dataFim) }}</span>
+        </div>
+        <span class="status" [class.ativo]="promocao.ativo" [class.inativo]="!promocao.ativo">
+          {{ promocao.ativo ? 'Ativa' : 'Inativa' }}
+        </span>
+      </div>
+
+      <div class="promocao-actions">
+        <button class="btn-editar" (click)="editarPromocao(promocao)">
+          Editar
+        </button>
+        <button class="btn-excluir" (click)="excluirPromocao(promocao)">
+          Excluir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="promocoes.length === 0 && !carregando && !erro" class="empty">
+    Nenhuma promoção cadastrada. Clique em "Nova Promoção" para começar.
+  </div>
+</div>
